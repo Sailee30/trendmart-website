@@ -1,12 +1,12 @@
 export default function MyProducts() {
   const products = [
-    { name: "Electronics", image: "/images/electronics.jpg" },
-    { name: "Clothing", image: "/images/clothing.jpg" },
-    { name: "Books", image: "/images/books.jpg" },
-    { name: "Furniture", image: "/images/furniture.jpg" },
-    { name: "Accessories", image: "/images/accessories.jpg" },
-    { name: "Sports Gear", image: "/images/sports.jpg" },
-    { name: "Toys", image: "/images/toys.jpg" },
+    { name: "Electronics", image: "public/images/electronics.jpg" },
+    { name: "Clothing", image: "public/images/clothing.jpg" },
+    { name: "Books", image: "public/images/books.jpg" },
+    { name: "Furniture", image: "public/images/furniture.jpg" },
+    { name: "Accessories", image: "public/images/accessories.jpg" },
+    { name: "Sports Gear", image: "public/images/sports.jpg" },
+    { name: "Toys", image: "public/images/toys.jpg" },
   ];
 
   return (
