@@ -1,3 +1,6 @@
+import Image from "next/image";
+import styles from "../styles/MyProducts.module.css"; // we'll create a CSS module
+
 export default function MyProducts() {
   const products = [
     { name: "Electronics", image: "/images/electronics.jpg" },
@@ -10,12 +13,18 @@ export default function MyProducts() {
   ];
 
   return (
-    <div className="page-container">
+    <div className={styles.pageContainer}>
       <h1>Our Products</h1>
-      <div className="products-grid">
+      <div className={styles.productsGrid}>
         {products.map((product, i) => (
-          <div key={i} className="product-card">
-            <img src={product.image} alt={product.name} />
+          <div key={i} className={styles.productCard}>
+            <Image
+              src={product.image}
+              alt={product.name}
+              width={300}
+              height={200}
+              className={styles.productImage}
+            />
             <h3>{product.name}</h3>
           </div>
         ))}
