@@ -22,6 +22,9 @@ export default function Navbar() {
         <Link href="/about" className="navLink">About Us</Link>
         <Link href="/myproducts" className="navLink">My Products</Link>
         <Link href="/contact" className="navLink">Contact Us</Link>
+        <Link href="/auth/login" className="navLink">Login</Link>
+        <Link href="/auth/signup" className="navLink">Signup</Link>
+
 
         <div className="dropdown">
         <span className="navLink" onClick={() => setOpen(!open)}>
