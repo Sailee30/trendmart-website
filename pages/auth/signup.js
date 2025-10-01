@@ -1,24 +1,38 @@
 import { useState } from "react";
 import Link from "next/link";
 import Navbar from "../../components/Navbar";
-import { useRouter } from "next/router";
+import { auth } from "../../lib/firebase";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 
 export default function Signup() {
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "user" });
-  const router = useRouter();
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    try {
+      // Signup in Firebase
+      const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
+      const user = userCredential.user;
 
-    // Save user to localStorage
-    localStorage.setItem("user", JSON.stringify(form));
+      // Save user data to MongoDB through API
+      await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uid: user.uid,
+          name: form.name,
+          email: form.email,
+          role: form.role,
+        }),
+      });
 
-    alert("Signup successful! Please login.");
-    router.push("/auth/login");
+      alert(`Signup successful! Welcome ${form.name}`);
+      router.push("/auth/login");
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   return (

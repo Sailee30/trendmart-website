@@ -2,36 +2,33 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Navbar from "../../components/Navbar";
+import { auth } from "../../lib/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const router = useRouter();
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    try {
+      // Login with Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, form.email, form.password);
+      const user = userCredential.user;
 
-    // Fetch saved user
-    const savedUser = JSON.parse(localStorage.getItem("user"));
+      // Fetch role from MongoDB
+      const res = await fetch(`/api/auth/get-user?uid=${user.uid}`);
+      const data = await res.json();
 
-    if (!savedUser) {
-      alert("No account found. Please signup first.");
-      return;
-    }
-
-    if (savedUser.email === form.email && savedUser.password === form.password) {
-      alert("Login successful!");
-
-      if (savedUser.role === "admin") {
+      if (data.role === "admin") {
         router.push("/admin");
       } else {
         router.push("/user");
       }
-    } else {
-      alert("Invalid credentials!");
+    } catch (error) {
+      alert(error.message);
     }
   };
 
