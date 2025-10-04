@@ -1,28 +1,75 @@
-import Navbar from "../../components/Navbar";
-import { useState } from "react";
+import Navbar from "../../components/Navbar"; 
+import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
 
 export default function AdminPortal() {
-  // Single product being filled in the form
+  const router = useRouter();
   const [product, setProduct] = useState({
     name: "",
     price: "",
     description: "",
-    image: "",
   });
+  const [image, setImage] = useState(null);
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // List of all added products
-  const [products, setProducts] = useState([]);
+  useEffect(() => {
+    // Check if user is admin
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    if (user.role !== "ADMIN") {
+      alert("Access denied. Admin only.");
+      router.push("/auth/login");
+    }
+  }, [router]);
 
-  // Handle form input changes
   const handleChange = (e) => {
     setProduct({ ...product, [e.target.name]: e.target.value });
   };
 
-  // Add product to the list
-  const handleAdd = (e) => {
+  const handleImageChange = (e) => {
+    setImage(e.target.files[0]);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setProducts([...products, product]);
-    setProduct({ name: "", price: "", description: "", image: "" }); // reset form
+    setLoading(true);
+    setMessage("");
+
+    try {
+      const formData = new FormData();
+      formData.append("name", product.name);
+      formData.append("price", product.price);
+      formData.append("description", product.description);
+      if (image) {
+        formData.append("image", image);
+      }
+
+      const token = localStorage.getItem("token");
+
+      const res = await fetch("/api/admin/add-product", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await res.json();
+      
+      if (data.success) {
+        setMessage("✅ Product added successfully!");
+        setProduct({ name: "", price: "", description: "" });
+        setImage(null);
+        document.getElementById("imageInput").value = "";
+      } else {
+        setMessage("❌ Error: " + data.error);
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      setMessage("❌ Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -30,65 +77,23 @@ export default function AdminPortal() {
       <Navbar />
       <div className="page-container">
         <h1>Admin Portal</h1>
-        <p>Upload and manage your products here </p>
+        <p>Upload and manage your products here</p>
 
-        {/* Product Form */}
-        <form onSubmit={handleAdd} className="contact-form">
-          <input
-            type="text"
-            name="name"
-            placeholder="Product Name"
-            value={product.name}
-            onChange={handleChange}
-            required
-          />
-          <input
-            type="text"
-            name="price"
-            placeholder="Product Price"
-            value={product.price}
-            onChange={handleChange}
-            required
-          />
-          <textarea
-            name="description"
-            placeholder="Product Description"
-            value={product.description}
-            onChange={handleChange}
-            required
-          />
-          <input
-            type="text"
-            name="image"
-            placeholder="Product Image URL"
-            value={product.image}
-            onChange={handleChange}
-            required
-          />
-          <button type="submit" className="submit-btn">
-            Add Product
+        <form onSubmit={handleSubmit} className="contact-form">
+          <input type="text" name="name" placeholder="Product Name" value={product.name} onChange={handleChange} required/>
+          <input type="number" step="0.01" name="price" placeholder="Product Price (e.g., ₹999 or $99)" value={product.price} onChange={handleChange} required/>
+          <textarea name="description" placeholder="Product Description" value={product.description} onChange={handleChange} required/>
+          <input id="imageInput" type="file" accept="image/*" onChange={handleImageChange} required/>
+          <button type="submit" className="submit-btn" disabled={loading}>
+            {loading ? "Adding Product..." : "Add Product"}
           </button>
         </form>
 
-        {/* Product List */}
-        <h2 style={{ marginTop: "20px" }}>Product List</h2>
-        <ul>
-          {products.map((p, i) => (
-            <li key={i} style={{ marginBottom: "20px" }}>
-              <strong>{p.name}</strong> - ₹{p.price}
-              <br />
-              <em>{p.description}</em>
-              <br />
-              {p.image && (
-                <img
-                  src={p.image}
-                  alt={p.name}
-                  style={{ width: "150px", marginTop: "10px" }}
-                />
-              )}
-            </li>
-          ))}
-        </ul>
+        {message && (
+          <p style={{ marginTop: "15px", padding: "10px", borderRadius: "5px", backgroundColor: message.includes("✅") ? "#dfd" : "#fee" }}>
+            {message}
+          </p>
+        )}
       </div>
     </>
   );

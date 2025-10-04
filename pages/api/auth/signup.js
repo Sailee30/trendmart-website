@@ -1,24 +1,53 @@
-import clientPromise from "../../../lib/mongodb";
+import prisma from '../../../lib/prisma';
+import { hashPassword, generateToken } from '../../../lib/auth';
 
 export default async function handler(req, res) {
-  if (req.method === "POST") {
-    const { uid, name, email, role } = req.body;
-    try {
-      const client = await clientPromise;
-      const db = client.db("ecommerceDB");
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-      // Save user if not exists
-      await db.collection("users").updateOne(
-        { uid },
-        { $set: { name, email, role } },
-        { upsert: true }
-      );
+  try {
+    const { name, email, password, role } = req.body;
 
-      res.status(200).json({ message: "User saved successfully" });
-    } catch (error) {
-      res.status(500).json({ error: "Error saving user" });
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'All fields are required' });
     }
-  } else {
-    res.status(405).json({ error: "Method not allowed" });
+
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ error: 'User already exists' });
+    }
+
+    const hashedPassword = await hashPassword(password);
+
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role: role === 'admin' ? 'ADMIN' : 'USER',
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+      },
+    });
+
+    const token = generateToken(user.id);
+
+    return res.status(201).json({
+      success: true,
+      token,
+      user,
+    });
+
+  } catch (error) {
+    console.error('Signup error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }
